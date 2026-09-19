@@ -22,7 +22,7 @@ Avalanche Fuji Testnet
 
 Contract address:
 
-0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47
+0xfB952e9814288A90E6C6EDEf6bc0554435e21c5C
 
 ## Current status
 
