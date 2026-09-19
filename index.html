@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChefPlan Waste Proof</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 60px auto;
+      padding: 20px;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      margin-top: 10px;
+    }
+
+    #status {
+      margin-top: 20px;
+      word-break: break-word;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>ChefPlan Waste Proof</h1>
+
+  <p>
+    Create a verifiable proof of a food-waste report on Avalanche Fuji.
+  </p>
+
+  <button id="connectButton">Connect Core Wallet</button>
+
+  <h3>Waste Report</h3>
+
+  <textarea id="report">
+Restaurant: Demo Restaurant
+Period: September 2026
+Food waste: 12.4 kg
+Waste reduction: 18%
+  </textarea>
+
+  <br>
+
+  <button id="verifyButton">Verify on Avalanche</button>
+
+  <div id="status"></div>
+
+  <script>
+    const CONTRACT_ADDRESS =
+      "0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47";
+
+    const ABI = [
+      "function verifyWasteReport(bytes32 reportHash) external",
+      "function isVerified(bytes32 reportHash) external view returns (bool)"
+    ];
+
+    let signer;
+
+    document.getElementById("connectButton").onclick = async () => {
+      try {
+        if (!window.ethereum) {
+          alert("Core Wallet extension not detected.");
+          return;
+        }
+
+        await window.ethereum.request({
+          method: "eth_requestAccounts"
+        });
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+
+        document.getElementById("status").innerText =
+          "✅ Wallet connected";
+      } catch (error) {
+        document.getElementById("status").innerText =
+          "Error: " + error.message;
+      }
+    };
+
+    document.getElementById("verifyButton").onclick = async () => {
+      try {
+        if (!signer) {
+          alert("Connect Core Wallet first.");
+          return;
+        }
+
+        const report =
+          document.getElementById("report").value;
+
+        const reportHash =
+          ethers.keccak256(
+            ethers.toUtf8Bytes(report)
+          );
+
+        const contract =
+          new ethers.Contract(
+            CONTRACT_ADDRESS,
+            ABI,
+            signer
+          );
+
+        document.getElementById("status").innerText =
+          "Waiting for Core confirmation...";
+
+        const tx =
+          await contract.verifyWasteReport(reportHash);
+
+        document.getElementById("status").innerText =
+          "Transaction sent: " + tx.hash;
+
+        await tx.wait();
+
+        document.getElementById("status").innerHTML =
+          "✅ Verified on Avalanche<br><br>" +
+          "Report hash:<br>" +
+          reportHash +
+          "<br><br>Transaction:<br>" +
+          tx.hash;
+
+      } catch (error) {
+        document.getElementById("status").innerText =
+          "Error: " + error.message;
+      }
+    };
+  </script>
+
+</body>
+</html>
