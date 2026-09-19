@@ -29,3 +29,12 @@ Contract address:
 - Smart contract deployed on Avalanche Fuji
 - Waste report verification tested successfully
 - Base44 integration in development
+
+- ## Live Demo
+
+Live demo: chefplan-avalanche-waste-proof.vercel.app
+
+Network: Avalanche Fuji C-Chain
+
+Contract address:
+0xfB952e9814288A90E6C6EDEf6bc0554435e21c5C
