@@ -63,39 +63,77 @@ Waste reduction: 18%
     const CONTRACT_ADDRESS =
       "0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47";
 
+    const FUJI_CHAIN_ID = "0xA869";
+
     const ABI = [
       "function verifyWasteReport(bytes32 reportHash) external",
       "function isVerified(bytes32 reportHash) external view returns (bool)"
     ];
 
     let signer;
+    let coreProvider;
 
     document.getElementById("connectButton").onclick = async () => {
       try {
-        if (!window.ethereum) {
+
+        coreProvider = window.avalanche;
+
+        if (!coreProvider) {
           alert("Core Wallet extension not detected.");
           return;
         }
 
-        await window.ethereum.request({
+        await coreProvider.request({
           method: "eth_requestAccounts"
         });
 
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        const currentChain = await coreProvider.request({
+          method: "eth_chainId"
+        });
+
+        if (currentChain !== FUJI_CHAIN_ID) {
+          await coreProvider.request({
+            method: "wallet_switchEthereumChain",
+            params: [
+              {
+                chainId: FUJI_CHAIN_ID
+              }
+            ]
+          });
+        }
+
+        const provider =
+          new ethers.BrowserProvider(coreProvider);
+
         signer = await provider.getSigner();
 
         document.getElementById("status").innerText =
-          "✅ Wallet connected";
+          "✅ Core connected to Avalanche Fuji";
+
       } catch (error) {
+
         document.getElementById("status").innerText =
           "Error: " + error.message;
+
       }
     };
 
     document.getElementById("verifyButton").onclick = async () => {
+
       try {
+
         if (!signer) {
           alert("Connect Core Wallet first.");
+          return;
+        }
+
+        const currentChain =
+          await coreProvider.request({
+            method: "eth_chainId"
+          });
+
+        if (currentChain !== FUJI_CHAIN_ID) {
+          alert("Please switch Core to Avalanche Fuji.");
           return;
         }
 
@@ -113,6 +151,19 @@ Waste reduction: 18%
             ABI,
             signer
           );
+
+        const alreadyVerified =
+          await contract.isVerified(reportHash);
+
+        if (alreadyVerified) {
+
+          document.getElementById("status").innerHTML =
+            "✅ This report is already verified on Avalanche.<br><br>" +
+            "Report hash:<br>" +
+            reportHash;
+
+          return;
+        }
 
         document.getElementById("status").innerText =
           "Waiting for Core confirmation...";
@@ -133,8 +184,10 @@ Waste reduction: 18%
           tx.hash;
 
       } catch (error) {
+
         document.getElementById("status").innerText =
           "Error: " + error.message;
+
       }
     };
   </script>
